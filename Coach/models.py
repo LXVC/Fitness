@@ -6,7 +6,7 @@ from django.db.models import TimeField, BooleanField, IntegerField, CharField, F
 from .myException import EndBeforeBeginError, StepTooLongError
 from django.utils import timezone
 from datetime import time
-
+from publicFunc import get_all_interval
 
 # Create your models here.
 class Coach(Model):
@@ -33,10 +33,7 @@ class Time(Model):
         return str(self.begin_time) + '-' + str(self.end_time)
 
     def save(self, *args, **kwargs):
-        hour_interval = (self.end_time.hour - self.begin_time.hour) * 60 * 60
-        minute_interval = (self.end_time.minute - self.begin_time.minute) * 60
-        second_interval = self.end_time.second - self.begin_time.second
-        all_interval = hour_interval + minute_interval + second_interval
+        all_interval = get_all_interval(self.begin_time,self.end_time)
         if all_interval <= 0:
             raise EndBeforeBeginError(all_interval)
         elif self.step * 60 > all_interval:

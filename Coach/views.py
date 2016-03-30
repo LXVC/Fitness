@@ -1,10 +1,10 @@
 # coding:utf-8
 from django.shortcuts import render, get_list_or_404
 from django.http import HttpResponse, Http404, JsonResponse
-from .models import Coach
-from datetime import time
 import json
-from .models import Coach, Order, Student
+from .models import Coach, Order, Student, Time
+from datetime import timedelta, datetime
+from publicFunc import get_all_interval
 
 
 # Create your views here.
@@ -26,7 +26,7 @@ def login(request):
         body = json.loads(request.body)
         account = body['account']
         password = body['password']
-        print account,password
+        print account, password
         student = Student.objects.filter(account=account)
         if student:
             if password == student[0].password:
@@ -39,11 +39,46 @@ def login(request):
     else:
         raise Http404
 
-def order(request):
-    if request.session.get('id',None):
-        return JsonResponse({'ok':True})
+
+def get_order(request):
+    c = Coach.objects.filter(account='123')[0]
+    t = Time.objects.filter(coach=c)[1]
+    all_interval = get_all_interval(t.begin_time, t.end_time)
+    enable_order_times = all_interval / (t.step * 60)  # 可预约次数
+    begin = str(t.begin_time).split(':')
+    year = datetime.now().year
+    month = datetime.now().month
+    day = datetime.now().day
+    begin_hour = int(begin[0])
+    begin_minute = int(begin[1])
+    begin_second = int(begin[2])
+    real_begin = datetime(year, month, day, begin_hour, begin_second, begin_minute)
+    data = {'timeList': [t.begin_time], 'coach': c.name}
+    for i in range(enable_order_times):
+        data['timeList'].append(str(real_begin + (timedelta(minutes=t.step) * (i + 1))).split(' ')[1])
+    return JsonResponse(data)
+
+
+def add_order(request):
+    if request.method == 'POST':
+        post_data = json.loads(request.body)
+        post_time = post_data['time']
+        coach = Coach.objects.filter(name=post_data['coach'])[0]
+        student = Student.objects.get(pk=request.session['id'])
+        order_time = post_time.split(':')
+        year = datetime.now().year
+        month = datetime.now().month
+        day = datetime.now().day
+        hour = int(order_time[0])
+        minute = int(order_time[1])
+        second = int(order_time[2])
+        order_time = datetime(year, month, day, hour, minute, second)
+        order = Order(coach=coach, student=student, order_time=order_time)
+        order.save()
+        return JsonResponse({'ok': True})
     else:
-        return JsonResponse({'ok':False,'message':u'您还未登录!'})
+        return HttpResponse('add')
+
 
 def history(request, date):
     date = date.split('-')
