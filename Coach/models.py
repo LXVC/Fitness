@@ -7,10 +7,11 @@ from .myException import EndBeforeBeginError, StepTooLongError
 from django.utils import timezone
 from datetime import time
 from publicFunc import get_all_interval
+from datetime import datetime
 
 # Create your models here.
 class Coach(Model):
-    account = CharField(max_length=20,unique=True)
+    account = CharField(max_length=20, unique=True)
     password = CharField(max_length=20)
     name = CharField(max_length=20)
 
@@ -33,7 +34,7 @@ class Time(Model):
         return str(self.begin_time) + '-' + str(self.end_time)
 
     def save(self, *args, **kwargs):
-        all_interval = get_all_interval(self.begin_time,self.end_time)
+        all_interval = get_all_interval(self.begin_time, self.end_time)
         if all_interval <= 0:
             raise EndBeforeBeginError(all_interval)
         elif self.step * 60 > all_interval:
@@ -47,7 +48,7 @@ class Time(Model):
 
 
 class Student(Model):
-    account = CharField(max_length=20,unique=True)
+    account = CharField(max_length=20, unique=True)
     password = CharField(max_length=20)
     name = CharField(max_length=20)
 
@@ -67,8 +68,15 @@ class Order(Model):
 
     def __unicode__(self):
         return self.student.name + u'预约了' + self.coach.name + u'在' + str(self.order_time.month) \
-               + u'月' + str(self.order_time.day) + u'号' + str(self.order_time.hour) + u'点'+\
-                str(self.order_time.minute)+'分'
+               + u'月' + str(self.order_time.day) + u'号' + str(self.order_time.hour) + u'点' + \
+               str(self.order_time.minute) + '分'
+
+    # def save(self, *args, **kwargs):      ToDo:修改accept状态之前先检查是否之前已经接受了其它预约
+    #     if self.accept:
+    #         year = datetime.now().year
+    #         month = datetime.now().month
+    #         day = datetime.now().day
+    #         Order.objects.filter(accept=True,order_time=datetime.now())
 
     class Meta:
         verbose_name = u'预约'

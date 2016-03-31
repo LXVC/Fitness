@@ -20,3 +20,13 @@ class StepTooLongError(Exception):
 
     def __str__(self):
         return repr(self.message)
+
+
+class isCoverByAcceptedError(Exception):
+    message = u'已经接受预约,不能接受新的预约'
+
+    def __init__(self):
+        Exception.__init__(self)
+
+    def __str__(self):
+        return repr(self.message)
